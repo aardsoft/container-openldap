@@ -1,0 +1,30 @@
+#!/bin/sh
+# OpenLDAP container startup script
+#
+# Detects configuration backend (files vs OLC/slapd.d) and starts slapd
+# with appropriate flags. Runs in foreground (-d 256) for container use.
+
+set -e
+
+SLAPD=/usr/sbin/slapd
+DEBUG_LEVEL="${SLAPD_DEBUG:-256}"
+LISTEN_URI="${SLAPD_LISTEN:-ldap://0.0.0.0:389}"
+
+# Ensure run directory exists
+mkdir -p /run/slapd
+
+# Determine config backend: prefer OLC (slapd.d) if present, else fall back
+# to slapd.conf. The pod mounts one or the other via ConfigMap/Secret.
+if [ -d /etc/openldap/slapd.d -a -f /etc/openldap/slapd.d/cn=config.ldif ]; then
+    echo "Starting slapd with OLC config backend (-F /etc/openldap/slapd.d)"
+    exec "$SLAPD" -d "$DEBUG_LEVEL" -h "$LISTEN_URI" -F /etc/openldap/slapd.d
+elif [ -f /etc/openldap/slapd.conf ]; then
+    echo "Starting slapd with file config backend (-f /etc/openldap/slapd.conf)"
+    exec "$SLAPD" -d "$DEBUG_LEVEL" -h "$LISTEN_URI" -f /etc/openldap/slapd.conf
+else
+    echo "ERROR: No LDAP configuration found."
+    echo "Expected one of:"
+    echo "  - /etc/openldap/slapd.d/cn=config.ldif  (OLC backend)"
+    echo "  - /etc/openldap/slapd.conf               (files backend)"
+    exit 1
+fi
