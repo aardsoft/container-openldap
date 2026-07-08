@@ -4,3 +4,7 @@
 # guarantees the user exists regardless of build environment quirks.
 getent group ldap >/dev/null || /usr/sbin/groupadd -g 70 -o -r ldap
 getent passwd ldap >/dev/null || /usr/sbin/useradd -r -o -g ldap -u 76 -s /bin/false -c "User for OpenLDAP" -d /var/lib/ldap ldap
+
+# Ensure slapd directories are owned by ldap user so the daemon can
+# read configuration and write data.
+chown -R ldap:ldap /etc/openldap /var/lib/ldap
