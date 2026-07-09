@@ -7,4 +7,5 @@ getent passwd ldap >/dev/null || /usr/sbin/useradd -r -o -g ldap -u 76 -s /bin/f
 
 # Ensure slapd directories are owned by ldap user so the daemon can
 # read configuration and write data.
-chown -R ldap:ldap /etc/openldap /var/lib/ldap
+mkdir -p /run/slapd
+chown -R ldap:ldap /etc/openldap /var/lib/ldap /run/slapd
